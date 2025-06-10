@@ -5,12 +5,13 @@ pub mod puy_components;
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use bevy_fly_camera::{FlyCamera, FlyCameraPlugin};
+use bevy_fly_camera::FlyCameraPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_rand::{plugin::EntropyPlugin, prelude::Xoshiro128Plus};
 use puy_ass::PuyoAssets;
 use puy_components::{
-    banish_puyos, fall_puyo, finish_banishing_puyo, owanimo_puyos, randomise_puys,
+    banish_puyos, fall_puyo::fall_puyo, finish_banishing_puyo, other_randomise_puys, owanimo_puyos,
+    randomise_puys,
 };
 
 fn main() {
@@ -33,7 +34,7 @@ fn main_plugin(app: &mut App) {
         .register_type::<puy_components::CartesianState>()
         .register_type::<puy_components::CartesianBoard6x12>()
         .add_systems(Startup, start)
-        .add_systems(Update, randomise_puys)
+        .add_systems(Update, (randomise_puys, other_randomise_puys))
         .add_systems(
             Update,
             (
@@ -65,7 +66,7 @@ fn start(mut cmd: Commands, puy_ass: Res<PuyoAssets>) {
     puy_components::spawn_cartes_board(
         &mut cmd,
         &puy_ass,
-        Transform::from_xyz(-3.0, -6.0 * 0.7, -10.0),
+        Transform::from_xyz(-10.0, -7.0 * 0.7, -10.0),
         "
         rrrrrr
         gggggg

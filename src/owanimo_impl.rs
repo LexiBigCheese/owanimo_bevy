@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use bevy::prelude::*;
 use owanimo::{
     Board,
+    gravity::GravityBoard,
     standard::{ColorBoard, NuisanceBoard},
 };
 
@@ -72,7 +75,7 @@ impl<'world, 'state, 'a> Board for CartBoart<'world, 'state, 'a> {
 
         match (a.ty, b.ty) {
             (PuyoType::Nuisance, _) | (_, PuyoType::Nuisance) => false,
-            (x, y) => (x == y),
+            (x, y) => x == y,
         }
     }
 }
@@ -96,5 +99,35 @@ impl<'world, 'state, 'a> ColorBoard for CartBoart<'world, 'state, 'a> {
         } else {
             None
         }
+    }
+}
+impl<'world, 'state, 'a> GravityBoard for CartBoart<'world, 'state, 'a> {
+    fn fall(&mut self) -> bool {
+        let mut did_fall = false;
+        let mut cols: HashMap<u32, Vec<(u32, Entity)>> = Default::default();
+        for (puy, ent) in self
+            .puyos
+            .iter()
+            .filter(|(puyo, _)| puyo.board == self.board)
+        {
+            let (x, y) = puy.grid_pos;
+            cols.entry(x)
+                .and_modify(|v| v.push((y, ent)))
+                .or_insert_with(|| vec![(y, ent)]);
+        }
+        for mut col in cols.into_values() {
+            col.sort_by_key(|(y, _)| *y);
+            for (y, (_, ent)) in col.into_iter().enumerate() {
+                let y = y as u32;
+                let Ok((mut puy, _)) = self.puyos.get_mut(ent) else {
+                    continue;
+                };
+                if puy.grid_pos.1 != y {
+                    did_fall = true;
+                    puy.fall_velocity = Some(0.0);
+                }
+            }
+        }
+        did_fall
     }
 }
