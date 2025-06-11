@@ -15,6 +15,9 @@ pub fn fall_puyo(
         if board.state != CartesianState::Fall {
             continue;
         }
+        //TODO: once todo in finish_banishing_puyo.rs uses .fall (and in future, assure it is called when a piece is placed)
+        // this function should make puyo accelerate towards their grid position,
+        // and also this function should put puyo into a jiggle state (and propagate a jiggle)
         board.state = CartesianState::Owanimo;
         let mut filled_spaces: std::collections::HashSet<(u32, u32)> = Default::default();
         for (puy, _) in puyos.iter() {
@@ -41,12 +44,17 @@ pub fn fall_puyo(
                 puy.grid_pos = pos;
                 filled_spaces.insert(pos);
                 trans.translation = vec3(pos.0 as f32, pos.1 as f32 * 0.8, 0.0);
+                trans.scale = Vec3::ONE;
                 n_oof += 1;
                 continue;
             } else {
                 fall_velocity += 9.8 * time.delta_secs();
                 puy.fall_velocity = Some(fall_velocity);
                 trans.translation += vec3(0.0, -fall_velocity * time.delta_secs(), 0.0);
+                let clamped_vel = fall_velocity.remap(0.0, 9.0, 1.0, 2.0).clamp(1.0, 2.0);
+                let x_scale = 1.0 / clamped_vel;
+                let y_scale = 1.0 * clamped_vel;
+                trans.scale = vec3(x_scale, y_scale, x_scale);
                 board.state = CartesianState::Fall;
                 n_falling += 1;
             }

@@ -22,6 +22,7 @@ pub fn finish_banishing_puyo(
                 break;
             }
         }
+        //TODO: use <CartBoard as GravityBoard>::fall here
         for mut puyo in puyos.iter_mut().filter(|puyo| &puyo.board == &ent) {
             puyo.fall_velocity = Some(0.0);
         }
