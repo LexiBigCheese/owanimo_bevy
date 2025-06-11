@@ -26,6 +26,7 @@ pub use puyo_component::{Puyo, PuyoType};
 
 pub mod puyo_component;
 
+pub mod jiggle;
 pub mod spawn_cartes_board;
 
 pub use spawn_cartes_board::spawn_cartes_board;

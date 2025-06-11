@@ -4,3 +4,9 @@ one system finds every puyo with `VertJiggleSource` and converts it into `VertJi
 another system finds every puyo with `VertJiggle` and integrates it,
 another system then takes all puyo, puts them into `HashMap<x-coord, Vec<(y-coord,&VertJiggle,&mut Transform)>>`,
 then sets `Transform` from `VertJiggle`
+
+NO! don't integrate, instead sample from curve for assured animation times.
+
+perhaps sample some `y=-(x-pi*(1.5))*cos(x-pi * (1.5))`
+
+or for any `n ∈ ints` `-(x - pi * (n-½) )*cos(x-pi * (n-½))`
