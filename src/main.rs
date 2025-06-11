@@ -59,6 +59,7 @@ fn start(mut cmd: Commands, puy_ass: Res<PuyoAssets>) {
     cmd.spawn((
         PointLight {
             range: 40.0,
+            intensity: 15000000.0,
             ..Default::default()
         },
         Transform::from_xyz(3.0, 3.0, -7.0),
@@ -66,7 +67,7 @@ fn start(mut cmd: Commands, puy_ass: Res<PuyoAssets>) {
     puy_components::spawn_cartes_board(
         &mut cmd,
         &puy_ass,
-        Transform::from_xyz(-10.0, -7.0 * 0.7, -10.0),
+        Transform::from_xyz(-10.0, -9.6, -29.7),
         "
         rrrrrr
         gggggg
