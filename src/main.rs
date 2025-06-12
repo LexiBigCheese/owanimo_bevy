@@ -10,8 +10,8 @@ use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_rand::{plugin::EntropyPlugin, prelude::Xoshiro128Plus};
 use puy_ass::PuyoAssets;
 use puy_components::{
-    banish_puyos, fall_puyo::fall_puyo, finish_banishing_puyo, other_randomise_puys, owanimo_puyos,
-    randomise_puys,
+    banish_puyos, fall_puyo::fall_puyo, falljiggle_or_still, other_randomise_puys, owanimo_puyos,
+    randomise_puys, then_fall_puyos_after_placing_them,
 };
 
 fn main() {
@@ -34,15 +34,18 @@ fn main_plugin(app: &mut App) {
         .register_type::<puy_components::CartesianState>()
         .register_type::<puy_components::CartesianBoard6x12>()
         .add_systems(Startup, start)
-        .add_systems(Update, (randomise_puys, other_randomise_puys))
         .add_systems(
             Update,
             (
-                finish_banishing_puyo,
-                banish_puyos,
-                owanimo_puyos,
-                fall_puyo,
+                randomise_puys,
+                other_randomise_puys,
+                then_fall_puyos_after_placing_them,
             ),
+        )
+        .add_plugins(puy_components::jiggle::plugin)
+        .add_systems(
+            Update,
+            (falljiggle_or_still, banish_puyos, owanimo_puyos, fall_puyo),
         );
 }
 

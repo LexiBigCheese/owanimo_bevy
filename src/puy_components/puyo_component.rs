@@ -33,11 +33,44 @@ impl Puyo {
 pub enum PuyoType {
     #[default]
     Nuisance,
+    NuisanceBL,
+    NuisanceTL,
+    NuisanceBR,
+    NuisanceTR,
     Red,
     Green,
     Blue,
     Yellow,
     Purple,
+}
+
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl PuyoType {
+    pub fn spreads_jiggle(&self, other: Self, direction: Direction) -> bool {
+        use Direction::{Down as D, Left as L, Right as R, Up as U};
+        use PuyoType::{
+            Nuisance, NuisanceBL as BL, NuisanceBR as BR, NuisanceTL as TL, NuisanceTR as TR,
+        };
+        match (*self, other, direction) {
+            (BL, BR, R)
+            | (BR, BL, L)
+            | (TL, TR, R)
+            | (TR, TL, L)
+            | (BL, TL, U)
+            | (TL, BL, D)
+            | (BR, TR, U)
+            | (TR, BR, D) => true,
+            (BL | BR | TL | TR | Nuisance, _, _) | (_, BL | BR | TL | TR | Nuisance, _) => false,
+            (x, y, _) => x == y,
+        }
+    }
 }
 
 impl Debug for PuyoType {
@@ -47,6 +80,10 @@ impl Debug for PuyoType {
             "{}\x1B[0m",
             match self {
                 PuyoType::Nuisance => "\x1B[0m●",
+                PuyoType::NuisanceBL => "\x1B[0m𜰹",
+                PuyoType::NuisanceBR => "\x1B[0m𜰺",
+                PuyoType::NuisanceTL => "\x1B[0m𜰵",
+                PuyoType::NuisanceTR => "\x1B[0m𜰶",
                 PuyoType::Green => "\x1B[92m●",
                 PuyoType::Red => "\x1B[91m●",
                 PuyoType::Blue => "\x1B[94m●",

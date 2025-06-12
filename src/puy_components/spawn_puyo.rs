@@ -1,4 +1,3 @@
-
 use super::Puyo;
 use bevy::prelude::*;
 
@@ -13,7 +12,7 @@ pub fn spawn_puyo(
     kind: PuyoType,
     pos: (usize, usize),
 ) {
-    println!("Spawning a {:?} at {:?}", kind, pos);
+    // println!("Spawning a {:?} at {:?}", kind, pos);
     let puyo = cmd
         .spawn((
             Puyo {
@@ -21,7 +20,7 @@ pub fn spawn_puyo(
                 ty: kind,
                 grid_pos: (pos.0 as u32, pos.1 as u32),
                 popping: None,
-                fall_velocity: Some(0.0),
+                fall_velocity: None,
             },
             ChildOf(board),
             Transform::from_xyz(pos.0 as f32, pos.1 as f32 * 0.8, 0.0),

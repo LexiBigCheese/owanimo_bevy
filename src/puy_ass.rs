@@ -11,6 +11,7 @@ pub struct PuyoAssets {
     blue: Handle<Scene>,
     yellow: Handle<Scene>,
     purple: Handle<Scene>,
+    big_nuisance: Handle<Scene>,
 }
 
 impl FromWorld for PuyoAssets {
@@ -25,12 +26,17 @@ impl FromWorld for PuyoAssets {
             blue: asset_server.load(GltfAssetLabel::Scene(0).from_asset("bluepuyo.glb")),
             yellow: asset_server.load(GltfAssetLabel::Scene(0).from_asset("yellowpuyo.glb")),
             purple: asset_server.load(GltfAssetLabel::Scene(0).from_asset("purplepuyo.glb")),
+            big_nuisance: asset_server
+                .load(GltfAssetLabel::Scene(0).from_asset("bignuisancepuyo.glb")),
         }
     }
 }
 
 impl PuyoAssets {
     pub fn spawn(&self, cmd: &mut Commands, kind: PuyoType, child_of: Entity) {
+        if let PuyoType::NuisanceBR | PuyoType::NuisanceTL | PuyoType::NuisanceTR = kind {
+            return;
+        }
         cmd.spawn((
             SceneRoot(match kind {
                 PuyoType::Nuisance => self.nuisance.clone(),
@@ -39,6 +45,8 @@ impl PuyoAssets {
                 PuyoType::Blue => self.blue.clone(),
                 PuyoType::Yellow => self.yellow.clone(),
                 PuyoType::Purple => self.purple.clone(),
+                PuyoType::NuisanceBL => self.big_nuisance.clone(),
+                _ => unreachable!(),
             }),
             ChildOf(child_of),
             Visibility::Inherited,

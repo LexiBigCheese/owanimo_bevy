@@ -125,8 +125,12 @@ impl<'world, 'state, 'a> GravityBoard for CartBoart<'world, 'state, 'a> {
                 if puy.grid_pos.1 != y {
                     did_fall = true;
                     puy.fall_velocity = Some(0.0);
+                    puy.grid_pos.1 = y;
                 }
             }
+        }
+        if did_fall {
+            println!("We did fall!");
         }
         did_fall
     }

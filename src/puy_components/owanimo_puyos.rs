@@ -1,4 +1,3 @@
-
 use bevy::prelude::*;
 use owanimo::Board;
 
@@ -10,14 +9,17 @@ use super::Puyo;
 
 use super::CartesianBoard6x12;
 
+///STATE TRANSITIONS:
+/// - `Owanimo -> Banishing`
+/// - `Owanimo -> Still`
 pub fn owanimo_puyos(
     mut boards: Query<(&mut CartesianBoard6x12, Entity)>,
     mut puyos: Query<(&mut Puyo, Entity)>,
 ) {
-    for (mut board_state, board_entity) in boards.iter_mut() {
-        if board_state.state != CartesianState::Owanimo {
-            continue;
-        }
+    for (mut board_state, board_entity) in boards
+        .iter_mut()
+        .filter(|(bs, _)| bs.state == CartesianState::Owanimo)
+    {
         let cart_boart = CartBoart {
             board: board_entity,
             puyos: puyos.reborrow(),
