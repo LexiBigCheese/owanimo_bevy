@@ -17,7 +17,7 @@ pub enum CartesianState {
     #[default]
     Still,
     JustPlaced,
-    FallOrJiggle,
+    Physics,
     TransitionToFallOrStill,
     Owanimo,
     ///Owanimo found targets

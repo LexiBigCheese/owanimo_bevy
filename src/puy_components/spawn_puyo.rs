@@ -1,4 +1,4 @@
-use super::Puyo;
+use super::{Puyo, puyo_component::PuyoState};
 use bevy::prelude::*;
 
 use super::PuyoType;
@@ -19,9 +19,8 @@ pub fn spawn_puyo(
                 board,
                 ty: kind,
                 grid_pos: (pos.0 as u32, pos.1 as u32),
-                popping: None,
-                fall_velocity: None,
             },
+            PuyoState::Still,
             ChildOf(board),
             Transform::from_xyz(pos.0 as f32, pos.1 as f32 * 0.8, 0.0),
             Visibility::Visible,

@@ -17,7 +17,7 @@ pub fn spawn_cartes_board(
     let board = cmd
         .spawn((
             CartesianBoard6x12 {
-                state: CartesianState::FallOrJiggle,
+                state: CartesianState::Physics,
                 ..Default::default()
             },
             at,

@@ -6,9 +6,13 @@ use bevy_rand::global::GlobalEntropy;
 use owanimo::gravity::GravityBoard;
 use rand::Rng;
 
-use crate::{owanimo_impl::CartBoart, puy_ass::PuyoAssets, puy_components::spawn_puyo};
+use crate::{
+    owanimo_impl::{CartBoart, GravityCartBoart},
+    puy_ass::PuyoAssets,
+    puy_components::spawn_puyo,
+};
 
-use super::{CartesianBoard6x12, CartesianState, Puyo, PuyoType};
+use super::{CartesianBoard6x12, CartesianState, Puyo, PuyoType, puyo_component::PuyoState};
 
 pub fn randomise_puys(
     mut cmds: Commands,
@@ -23,7 +27,7 @@ pub fn randomise_puys(
             cmds.entity(puy).despawn();
         }
         for (mut brd_state, brd) in boards.iter_mut() {
-            brd_state.state = CartesianState::FallOrJiggle;
+            brd_state.state = CartesianState::Physics;
             for x in 0..6 {
                 for y in 0..12 {
                     use PuyoType::*;
@@ -47,14 +51,14 @@ pub fn other_randomise_puys(
     mut cmds: Commands,
     puy_ass: Res<PuyoAssets>,
     mut boards: Query<(&mut CartesianBoard6x12, Entity)>,
-    mut puyos: Query<(&mut Puyo, Entity)>,
+    puyos: Query<(&Puyo, Entity)>,
     mut rng: GlobalEntropy<Xoshiro128Plus>,
 ) {
     for (mut board_state, brd) in boards.iter_mut() {
         if board_state.state != CartesianState::Still {
             continue;
         }
-        board_state.state = CartesianState::FallOrJiggle;
+        board_state.state = CartesianState::Physics;
         for (_, oh) in puyos.iter().filter(|(puy, _)| puy.board == brd) {
             cmds.entity(oh).despawn();
         }
@@ -79,17 +83,19 @@ pub fn other_randomise_puys(
 pub fn then_fall_puyos_after_placing_them(
     mut boards: Query<(&mut CartesianBoard6x12, Entity)>,
     mut puyos: Query<(&mut Puyo, Entity)>,
+    mut states: Query<&mut PuyoState>,
 ) {
     for (mut board_state, board) in boards
         .iter_mut()
         .filter(|(bs, _)| bs.state == CartesianState::JustPlaced)
     {
-        let mut cartboart = CartBoart {
+        let mut cartboart = GravityCartBoart {
             board,
             puyos: puyos.reborrow(),
+            states: states.reborrow(),
         };
         if cartboart.fall() {
-            board_state.state = CartesianState::FallOrJiggle;
+            board_state.state = CartesianState::Physics;
         } else {
             board_state.state = CartesianState::Still;
         }

@@ -45,7 +45,7 @@ fn main_plugin(app: &mut App) {
         .add_plugins(puy_components::jiggle::plugin)
         .add_systems(
             Update,
-            (falljiggle_or_still, banish_puyos, owanimo_puyos, fall_puyo),
+            (falljiggle_or_still, owanimo_puyos, banish_puyos, fall_puyo),
         );
 }
 

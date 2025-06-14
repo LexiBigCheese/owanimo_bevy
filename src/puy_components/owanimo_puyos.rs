@@ -4,6 +4,7 @@ use owanimo::Board;
 use crate::owanimo_impl::CartBoart;
 
 use super::CartesianState;
+use super::puyo_component::PuyoState;
 
 use super::Puyo;
 
@@ -15,6 +16,7 @@ use super::CartesianBoard6x12;
 pub fn owanimo_puyos(
     mut boards: Query<(&mut CartesianBoard6x12, Entity)>,
     mut puyos: Query<(&mut Puyo, Entity)>,
+    mut states: Query<&mut PuyoState>,
 ) {
     for (mut board_state, board_entity) in boards
         .iter_mut()
@@ -36,10 +38,10 @@ pub fn owanimo_puyos(
         for g in &binding {
             for p in g.iter() {
                 let Some(p) = p else { continue };
-                let Ok(mut p) = puyos.get_mut(p.clone()) else {
+                let Ok(mut p) = states.get_mut(p.clone()) else {
                     continue;
                 };
-                p.0.popping = Some(1.0);
+                p.start_popping();
             }
         }
         board_state.state = CartesianState::Banishing;

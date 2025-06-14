@@ -2,16 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use bevy::prelude::*;
 
-use super::{CartesianBoard6x12, CartesianState, Puyo, PuyoType};
-
-#[derive(Component, Reflect, Default, Copy, Clone)]
-#[reflect(Default)]
-pub struct VertJiggle {
-    pub offset: f32,
-    pub vel: f32,
-    ///If this reaches zero, the animation MUST stop!
-    pub life: f32,
-}
+use super::{CartesianBoard6x12, CartesianState, Puyo, PuyoType, puyo_component::PuyoState};
 
 #[derive(Component, Reflect, Default, Copy, Clone)]
 #[reflect(Default)]
@@ -34,18 +25,29 @@ impl Default for PuyoStiffDamp {
 }
 
 fn integrate_vert_jiggle(
-    mut vert_jiggles: Query<&mut VertJiggle>,
+    mut vert_jiggles: Query<&mut PuyoState>,
     time: Res<Time>,
     sd: Res<PuyoStiffDamp>,
 ) {
+    let dt = time.delta_secs();
     vert_jiggles.par_iter_mut().for_each(|mut vj| {
-        let acc = sd.stiff * -vj.offset;
-        let acc = acc * time.delta_secs();
-        let vel = (vj.vel + acc) * sd.damp;
-        *vj = VertJiggle {
-            offset: (vj.offset + vj.vel * time.delta_secs()) * vj.life,
-            vel, //acc ∝ -offset, acc ∝ 1/life
-            life: vj.life - (time.delta_secs() * 0.1),
+        let PuyoState::Jiggle {
+            mut offset,
+            mut velocity,
+            mut life,
+        } = *vj
+        else {
+            return;
+        };
+        let acc = sd.stiff * -offset;
+        let acc = acc * dt;
+        velocity = (velocity + acc) * sd.damp;
+        offset = (offset + velocity * dt) * life;
+        life -= dt * 0.1;
+        *vj = PuyoState::Jiggle {
+            offset,
+            velocity,
+            life,
         };
     });
 }
@@ -89,7 +91,7 @@ fn update_all_boards(all_puys: Query<(&Puyo, Entity)>, mut allboards: ResMut<All
 /// then transferred down to the bottom right green puyo (visually)
 fn spread_jiggle_recursive(
     cmd: &mut Commands,
-    put: &mut Query<&mut VertJiggle>,
+    put: &mut Query<&mut PuyoState>,
     map: &HashMap<(Entity, (u32, u32)), (Entity, PuyoType)>,
     done: &mut HashSet<(Entity, (u32, u32))>,
     strength: f32,
@@ -102,16 +104,25 @@ fn spread_jiggle_recursive(
     if strength < min_strength {
         return;
     }
-    if let Ok(mut vj) = put.get_mut(ent) {
-        vj.life = 1.0;
-        vj.vel = -strength;
-    } else {
-        cmd.entity(ent).try_insert(VertJiggle {
+    let Ok(mut state) = put.get_mut(ent) else {
+        return;
+    };
+    *state = if let PuyoState::Jiggle {
+        offset, velocity, ..
+    } = *state
+    {
+        PuyoState::Jiggle {
+            offset,
+            velocity: velocity - strength,
             life: 1.0,
-            vel: -strength,
+        }
+    } else {
+        PuyoState::Jiggle {
             offset: 0.0,
-        });
-    }
+            velocity: -strength,
+            life: 1.0,
+        }
+    };
     done.insert(location);
     let (board, (x, y)) = location;
     let neighbors = {
@@ -163,7 +174,7 @@ fn spread_jiggle_recursive(
 fn spread_jiggle_sources(
     mut cmd: Commands,
     sources: Query<(&Puyo, &VertJiggleSource, Entity)>,
-    mut put: Query<&mut VertJiggle>,
+    mut put: Query<&mut PuyoState>,
     puys: Res<AllBoards>,
 ) {
     //This is probably quite the expensive algorithm, due to it's time complexity
@@ -186,12 +197,20 @@ fn spread_jiggle_sources(
 }
 
 fn remove_jiggles(
-    mut cmds: Commands,
-    mut vjs: Query<(&VertJiggle, &mut Transform, &Puyo, Entity)>,
+    // mut cmds: Commands,
+    mut vjs: Query<(&mut PuyoState, &mut Transform, &Puyo)>,
 ) {
-    for (vj, mut trans, puyo, ent) in vjs.iter_mut() {
-        if vj.life <= 0.0 || (vj.vel.abs() < 0.0025 && vj.offset.abs() < 0.0025) {
-            cmds.entity(ent).remove::<VertJiggle>();
+    for (mut vj, mut trans, puyo) in vjs.iter_mut() {
+        let PuyoState::Jiggle {
+            offset,
+            velocity,
+            life,
+        } = *vj
+        else {
+            continue;
+        };
+        if life <= 0.0 || (velocity.abs() < 0.0025 && offset.abs() < 0.0025) {
+            *vj = PuyoState::Still;
             trans.translation = puyo.grid_to_vec();
             trans.scale = Vec3::ONE;
         }
@@ -201,24 +220,26 @@ fn remove_jiggles(
 fn act_jiggles(
     all_boards: Res<AllBoards>,
     brds: Query<(&CartesianBoard6x12, Entity)>,
-    mut puys: Query<(&Puyo, Option<&VertJiggle>, &mut Transform)>,
+    mut puys: Query<(&Puyo, &PuyoState, &mut Transform)>,
 ) {
     //Board,x -> y,Puyo
     let mut columns: HashMap<(Entity, u32), Vec<(u32, Entity, f32)>> = Default::default();
     for ((board, (x, y)), (puyent, ty)) in all_boards.0.iter() {
-        if let Ok((puy, vj, _)) = puys.get(*puyent) {
-            if puy.fall_velocity.is_none() {
-                let vj = vj.map(|vj| vj.offset).unwrap_or(0.0);
-                columns
-                    .entry((*board, *x))
-                    .and_modify(|col| col.push((*y, *puyent, vj)))
-                    .or_insert_with(|| vec![(*y, *puyent, vj)]);
-            }
+        if let Ok((puy, state, _)) = puys.get(*puyent) {
+            let vj = match *state {
+                PuyoState::Fall { .. } => continue,
+                PuyoState::Jiggle { offset, .. } => offset,
+                _ => 0.0,
+            };
+            columns
+                .entry((*board, *x))
+                .and_modify(|col| col.push((*y, *puyent, vj)))
+                .or_insert_with(|| vec![(*y, *puyent, vj)]);
         }
     }
     for (board_state, board_ent) in brds
         .iter()
-        .filter(|(bs, _)| bs.state == CartesianState::FallOrJiggle)
+        .filter(|(bs, _)| bs.state == CartesianState::Physics)
     {
         for ((maybe_board_ent, x), mut col) in columns.iter_mut() {
             if maybe_board_ent != &board_ent {
@@ -246,7 +267,6 @@ fn act_jiggles(
 pub fn plugin(app: &mut App) {
     app.init_resource::<PuyoStiffDamp>()
         .init_resource::<AllBoards>()
-        .register_type::<VertJiggle>()
         .register_type::<VertJiggleSource>()
         .register_type::<PuyoStiffDamp>()
         .add_systems(

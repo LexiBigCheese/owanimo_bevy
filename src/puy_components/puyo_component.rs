@@ -7,22 +7,40 @@ use bevy::{
 };
 
 #[derive(Component, Debug, Reflect)]
+#[require(PuyoState)]
 pub struct Puyo {
     pub board: Entity,
     pub grid_pos: (u32, u32),
     pub ty: PuyoType,
-    pub popping: Option<f32>,
-    //If this is settled, this is None
-    pub fall_velocity: Option<f32>,
+}
+
+#[derive(Debug, Reflect, Default, Copy, Clone, Component)]
+pub enum PuyoState {
+    #[default]
+    Still,
+    Fall {
+        velocity: f32,
+    },
+    Jiggle {
+        offset: f32,
+        velocity: f32,
+        life: f32,
+    },
+    Banish {
+        life: f32,
+    },
+}
+
+impl PuyoState {
+    pub fn start_falling(&mut self) {
+        *self = PuyoState::Fall { velocity: 0.0 };
+    }
+    pub fn start_popping(&mut self) {
+        *self = PuyoState::Banish { life: 1.0 };
+    }
 }
 
 impl Puyo {
-    pub fn start_falling(&mut self) {
-        self.fall_velocity = Some(0.0);
-    }
-    pub fn start_popping(&mut self) {
-        self.popping = Some(1.0);
-    }
     pub fn grid_to_vec(&self) -> Vec3 {
         vec3(self.grid_pos.0 as f32, self.grid_pos.1 as f32 * 0.8, 0.0)
     }

@@ -1,10 +1,7 @@
 FallOrJiggle -> FallOrJiggle
 FallOrJiggle -> OwanimoOrStill
-OwanimoOrStill -> Owanimo
+OwanimoOrStill -> Owanimo -> Banishing
 OwanimoOrStill -> Still
-Owanimo -> Banishing
-Owanimo -> Still
 Banishing -> Banishing
 Banishing -> Still
 Banishing -> FallOrJiggle
-
