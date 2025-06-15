@@ -1,5 +1,6 @@
 pub mod puy_ass;
 pub mod puyo_chara;
+pub mod screensaver_rule;
 
 use std::f32::consts::PI;
 
