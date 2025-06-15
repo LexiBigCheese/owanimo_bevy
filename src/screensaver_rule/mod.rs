@@ -62,3 +62,15 @@ pub struct SPJiggle {
 pub struct SPBanish {
     pub life: f32,
 }
+
+pub fn screensaver_rule_plugin(app: &mut App) {
+    app.register_type::<SBoard>()
+        .register_type::<SBState>()
+        .register_type::<SPuyo>()
+        .register_type::<SPState>()
+        .register_type::<SPStill>()
+        .register_type::<SPPhysics>()
+        .register_type::<SPFall>()
+        .register_type::<SPJiggle>()
+        .register_type::<SPBanish>();
+}

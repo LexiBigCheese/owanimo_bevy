@@ -20,6 +20,7 @@ fn main() {
         })
         .add_plugins(EntropyPlugin::<Xoshiro128Plus>::default())
         .add_plugins(main_plugin)
+        .add_plugins(screensaver_rule::screensaver_rule_plugin)
         .add_plugins(WorldInspectorPlugin::new())
         .run();
 }
