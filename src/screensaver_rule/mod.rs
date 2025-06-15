@@ -1,3 +1,5 @@
+pub mod owanimo_impl;
+
 use bevy::prelude::*;
 
 use crate::puyo_chara::PuyoType;
