@@ -1,7 +1,8 @@
 use std::f32::consts::PI;
 
-use crate::puy_components::PuyoType;
 use bevy::prelude::*;
+
+use crate::puyo_chara::PuyoType;
 
 #[derive(Resource)]
 pub struct PuyoAssets {

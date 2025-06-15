@@ -1,6 +1,5 @@
-pub mod owanimo_impl;
 pub mod puy_ass;
-pub mod puy_components;
+pub mod puyo_chara;
 
 use std::f32::consts::PI;
 
@@ -9,10 +8,6 @@ use bevy_fly_camera::FlyCameraPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_rand::{plugin::EntropyPlugin, prelude::Xoshiro128Plus};
 use puy_ass::PuyoAssets;
-use puy_components::{
-    banish_puyos, fall_puyo::fall_puyo, falljiggle_or_still, other_randomise_puys, owanimo_puyos,
-    randomise_puys, then_fall_puyos_after_placing_them,
-};
 
 fn main() {
     App::new()
@@ -29,24 +24,7 @@ fn main() {
 
 fn main_plugin(app: &mut App) {
     app.init_resource::<PuyoAssets>()
-        .register_type::<puy_components::Puyo>()
-        .register_type::<puy_components::PuyoType>()
-        .register_type::<puy_components::CartesianState>()
-        .register_type::<puy_components::CartesianBoard6x12>()
-        .add_systems(Startup, start)
-        .add_systems(
-            Update,
-            (
-                randomise_puys,
-                other_randomise_puys,
-                then_fall_puyos_after_placing_them,
-            ),
-        )
-        .add_plugins(puy_components::jiggle::plugin)
-        .add_systems(
-            Update,
-            (falljiggle_or_still, fall_puyo, owanimo_puyos, banish_puyos),
-        );
+        .add_systems(Startup, start);
 }
 
 fn start(mut cmd: Commands, puy_ass: Res<PuyoAssets>) {
@@ -67,23 +45,4 @@ fn start(mut cmd: Commands, puy_ass: Res<PuyoAssets>) {
         },
         Transform::from_xyz(3.0, 3.0, -7.0),
     ));
-    puy_components::spawn_cartes_board(
-        &mut cmd,
-        &puy_ass,
-        Transform::from_xyz(-10.0, -9.6, -29.7),
-        "
-        rrrrrr
-        gggggg
-        bb__bb
-        yy__yy
-        pp__pp
-        oo__oo
-        rr__rr
-        gg__gg
-        bb__bb
-        yy__yy
-        ______
-        oooooo
-    ",
-    );
 }
