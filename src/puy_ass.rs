@@ -52,7 +52,8 @@ impl PuyoAssets {
             ChildOf(child_of),
             Visibility::Inherited,
             Transform::from_scale(Vec3::ONE * 0.5)
-                .with_rotation(Quat::from_axis_angle(Vec3::Y, -90.0 * (PI / 180.0))),
+                .with_rotation(Quat::from_axis_angle(Vec3::Y, -90.0 * (PI / 180.0)))
+                .with_translation(vec3(0.0, 0.4, 0.0)),
         ));
     }
 }

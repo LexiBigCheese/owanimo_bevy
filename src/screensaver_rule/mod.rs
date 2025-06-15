@@ -1,4 +1,7 @@
+pub mod main_loop;
 pub mod owanimo_impl;
+
+use std::fmt::Debug;
 
 use bevy::prelude::*;
 
@@ -25,6 +28,10 @@ pub struct SPuyo {
     pub entity: Entity,
     pub state: SPState,
 }
+
+/// Exists to limit transforms that the rule iterates over
+#[derive(Debug, Reflect, Component, Clone, Copy)]
+pub struct IsSPuyo;
 
 #[derive(Debug, Reflect, Clone, Copy)]
 pub enum SPState {
@@ -65,14 +72,110 @@ pub struct SPBanish {
     pub life: f32,
 }
 
+#[derive(Debug, Reflect)]
+pub struct SPhysProp {
+    pub gravity: f32,
+    pub velocity_to_impact: f32,
+    pub impact_falloff: f32,
+    pub min_impactable: f32,
+    pub jiggle_stiff: f32,
+    pub jiggle_damp: f32,
+}
+
+impl Default for SPhysProp {
+    fn default() -> Self {
+        SPhysProp {
+            gravity: 9.8,
+            velocity_to_impact: 0.3,
+            impact_falloff: 0.25,
+            min_impactable: 0.1,
+            jiggle_stiff: 80.0,
+            jiggle_damp: 0.8,
+        }
+    }
+}
+
+#[derive(Debug, Reflect, Resource, Default)]
+pub struct EveryoneSPhysProp {
+    pub spp: SPhysProp,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum Dir {
+    U,
+    D,
+    L,
+    R,
+}
+
+impl core::ops::Add<(usize, usize)> for Dir {
+    type Output = Option<(usize, usize)>;
+    fn add(self, rhs: (usize, usize)) -> Self::Output {
+        use Dir::*;
+        match (self, rhs) {
+            (L, (0, _)) => None,
+            (D, (_, 0)) => None,
+            (L, (col, row)) => Some((col - 1, row)),
+            (R, (col, row)) => Some((col + 1, row)),
+            (U, (col, row)) => Some((col, row + 1)),
+            (D, (col, row)) => Some((col, row - 1)),
+        }
+    }
+}
+
+impl core::ops::Neg for Dir {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        use Dir::*;
+        match self {
+            U => D,
+            D => U,
+            L => R,
+            R => L,
+        }
+    }
+}
+
+impl Dir {
+    pub fn others(self) -> [Dir; 3] {
+        use Dir::*;
+        match self {
+            U => [R, D, L],
+            R => [D, L, U],
+            D => [L, U, R],
+            L => [U, R, D],
+        }
+    }
+}
+
+impl Debug for Dir {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Dir::*;
+        write!(
+            f,
+            "{}",
+            match self {
+                U => "↑",
+                D => "↓",
+                L => "←",
+                R => "→",
+            }
+        )
+    }
+}
+
 pub fn screensaver_rule_plugin(app: &mut App) {
     app.register_type::<SBoard>()
         .register_type::<SBState>()
         .register_type::<SPuyo>()
+        .register_type::<IsSPuyo>()
         .register_type::<SPState>()
         .register_type::<SPStill>()
         .register_type::<SPPhysics>()
         .register_type::<SPFall>()
         .register_type::<SPJiggle>()
-        .register_type::<SPBanish>();
+        .register_type::<SPBanish>()
+        .register_type::<SPhysProp>()
+        .register_type::<EveryoneSPhysProp>()
+        .init_resource::<EveryoneSPhysProp>();
 }

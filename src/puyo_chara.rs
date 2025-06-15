@@ -2,6 +2,8 @@ use std::fmt::Debug;
 
 use bevy::prelude::*;
 
+pub const PUYO_HEIGHT: f32 = 0.8;
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Default, Reflect)]
 #[reflect(Default)]
 pub enum PuyoType {
