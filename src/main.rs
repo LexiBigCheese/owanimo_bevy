@@ -8,6 +8,7 @@ use bevy_fly_camera::FlyCameraPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_rand::{plugin::EntropyPlugin, prelude::Xoshiro128Plus};
 use puy_ass::PuyoAssets;
+use puyo_chara::PuyoType;
 
 fn main() {
     App::new()
@@ -24,6 +25,7 @@ fn main() {
 
 fn main_plugin(app: &mut App) {
     app.init_resource::<PuyoAssets>()
+        .register_type::<PuyoType>()
         .add_systems(Startup, start);
 }
 
