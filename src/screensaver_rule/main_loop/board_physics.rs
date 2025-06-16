@@ -133,7 +133,7 @@ pub(crate) fn propagate_jiggle(
         return None;
     }
     use SPState::*;
-    let mut puy = board.get_mut_at(at)?;
+    let puy = board.get_mut_at(at)?;
     let mut can_go_on = false;
     if let Physics(SPPhysics::Jiggle(SPJiggle { momentum, .. })) = puy.state {
         puy.state = SPState::new_jiggle(momentum + impulse);
