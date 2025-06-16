@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use bevy_rand::{global::GlobalEntropy, prelude::Xoshiro128Plus};
 use owanimo::Board;
 
-use crate::{puy_ass::PuyoAssets, puyo_chara::PUYO_HEIGHT};
+use crate::puy_ass::PuyoAssets;
 
-use super::{EveryoneSPhysProp, IsSPuyo, SBState, SBoard, SPJiggle, SPPhysics, SPState, SPhysProp};
+use super::{EveryoneSPhysProp, IsSPuyo, SBState, SBoard, SPState, SPhysProp};
 
 pub fn main_loop(
     mut cmd: Commands,
@@ -68,7 +68,6 @@ fn board_update(
     mut board: &mut SBoard,
     board_entity: Entity,
 ) {
-    let prev_board_state = board.state.clone();
     let mut next_up = match board.state {
         SBState::Still => {
             spawn_random::spawn_random(cmd, rng, puyo_assets, 24, &mut board, board_entity)
