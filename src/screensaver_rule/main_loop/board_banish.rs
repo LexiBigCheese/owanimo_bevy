@@ -5,10 +5,10 @@ use crate::screensaver_rule::{IsSPuyo, SBState, SBoard, SPFall, SPPhysics, SPSta
 use super::{NextUp, WhyImpossible};
 
 pub(crate) fn board_banish(
-    mut cmd: &mut Commands,
+    cmd: &mut Commands,
     time: &Res<Time>,
     mut puyo_transforms: Query<&mut Transform, With<IsSPuyo>>,
-    mut board: &mut SBoard,
+    board: &mut SBoard,
 ) -> NextUp {
     let SBState::Banish { life } = &mut board.state else {
         return NextUp::Impossible(WhyImpossible::BanishingWhenNotBanishing);
