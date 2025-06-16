@@ -102,8 +102,15 @@ impl<'board, 'world, 'state, 'trans> JigglyBoard
             (Nuisance | NuisanceBL | NuisanceBR | NuisanceTL | NuisanceTR, _, _)
             | (_, Nuisance | NuisanceBL | NuisanceBR | NuisanceTL | NuisanceTR, _) => None,
             (_, _, D) => yippee,
-            (a, b, L | R) => {
-                if a == b {
+            (ak, bk, L | R) => {
+                if matches!(
+                    a.state,
+                    SPState::Still(..) | SPState::Physics(SPPhysics::Jiggle(..))
+                ) && matches!(
+                    b.state,
+                    SPState::Still(..) | SPState::Physics(SPPhysics::Jiggle(..))
+                ) && ak == bk
+                {
                     yippee
                 } else {
                     None
