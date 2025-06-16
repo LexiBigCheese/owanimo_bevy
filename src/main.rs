@@ -36,7 +36,7 @@ fn main_plugin(app: &mut App) {
         .add_systems(Startup, start);
 }
 
-fn start(mut cmd: Commands, puy_ass: Res<PuyoAssets>, mut rng: GlobalEntropy<Xoshiro128Plus>) {
+fn start(mut cmd: Commands) {
     cmd.spawn((
         Camera3d::default(),
         Projection::Perspective(PerspectiveProjection {
