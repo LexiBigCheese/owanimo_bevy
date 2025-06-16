@@ -10,7 +10,7 @@ use bevy_inspector_egui::{
     bevy_egui::EguiPlugin,
     quick::{ResourceInspectorPlugin, WorldInspectorPlugin},
 };
-use bevy_rand::{global::GlobalEntropy, plugin::EntropyPlugin, prelude::Xoshiro128Plus};
+use bevy_rand::{plugin::EntropyPlugin, prelude::Xoshiro128Plus};
 use puy_ass::PuyoAssets;
 use puyo_chara::PuyoType;
 use screensaver_rule::{EveryoneSPhysProp, SBState};
