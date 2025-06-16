@@ -10,16 +10,19 @@ use crate::puyo_chara::PuyoType;
 #[derive(Component, Debug, Reflect)]
 pub struct SBoard {
     pub score: u64,
+    pub chain: usize,
     pub columns: Vec<Vec<SPuyo>>,
     pub state: SBState,
 }
 
-#[derive(Debug, Reflect, Default)]
+#[derive(Debug, Reflect, Default, Clone)]
 pub enum SBState {
     #[default]
     Still,
     Physics,
-    Banish,
+    Banish {
+        life: f32,
+    },
 }
 
 #[derive(Debug, Reflect)]
@@ -46,6 +49,22 @@ impl Default for SPState {
     }
 }
 
+impl SPState {
+    pub fn new_falling() -> Self {
+        SPState::Physics(SPPhysics::Fall(SPFall { velocity: 0.0 }))
+    }
+    pub fn new_banishing() -> Self {
+        SPState::Banish(SPBanish {})
+    }
+    pub fn new_jiggle(momentum: f32) -> Self {
+        SPState::Physics(SPPhysics::Jiggle(SPJiggle {
+            momentum,
+            offset: 0.0,
+            life: 1.0,
+        }))
+    }
+}
+
 #[derive(Debug, Reflect, Clone, Copy, Default)]
 pub struct SPStill {}
 
@@ -68,9 +87,7 @@ pub struct SPJiggle {
 }
 
 #[derive(Debug, Reflect, Clone, Copy)]
-pub struct SPBanish {
-    pub life: f32,
-}
+pub struct SPBanish {}
 
 #[derive(Debug, Reflect)]
 pub struct SPhysProp {
@@ -85,10 +102,10 @@ pub struct SPhysProp {
 impl Default for SPhysProp {
     fn default() -> Self {
         SPhysProp {
-            gravity: 9.8,
+            gravity: 9.8 * 2.0,
             velocity_to_impact: 0.3,
-            impact_falloff: 0.25,
-            min_impactable: 0.1,
+            impact_falloff: 0.5,
+            min_impactable: 0.2,
             jiggle_stiff: 80.0,
             jiggle_damp: 0.8,
         }
@@ -177,5 +194,6 @@ pub fn screensaver_rule_plugin(app: &mut App) {
         .register_type::<SPBanish>()
         .register_type::<SPhysProp>()
         .register_type::<EveryoneSPhysProp>()
-        .init_resource::<EveryoneSPhysProp>();
+        .init_resource::<EveryoneSPhysProp>()
+        .add_systems(Update, (main_loop::main_loop));
 }

@@ -38,10 +38,14 @@ pub(crate) fn board_physics(
         for (y, puyo) in col.into_iter().enumerate() {
             match &mut puyo.state {
                 SPState::Still(..) => {
+                    let Ok(mut puyo_transform) = puyo_transforms.get_mut(puyo.entity) else {
+                        continue;
+                    };
+                    puyo_transform.translation.y = jiggle_offset;
                     jiggle_offset += PUYO_HEIGHT;
                 }
                 SPState::Physics(spphysics) => {
-                    next_up = NextUp::Nothing;
+                    next_up = NextUp::Continue;
                     match spphysics {
                         SPPhysics::Fall(spfall) => {
                             spfall.velocity += physics_properties.gravity * dt;
@@ -49,7 +53,7 @@ pub(crate) fn board_physics(
                             else {
                                 continue;
                             };
-                            puyo_transform.translation.y -= spfall.velocity;
+                            puyo_transform.translation.y -= spfall.velocity * dt;
                             let clamped_vel =
                                 spfall.velocity.remap(0.0, 9.0, 1.0, 2.0).clamp(1.0, 2.0);
                             let x_scale = 1.0 / clamped_vel;
@@ -62,6 +66,7 @@ pub(crate) fn board_physics(
                                     came_from: Dir::U,
                                     at: (x, y),
                                 });
+                                puyo.state = SPState::default();
                             }
                         }
                         SPPhysics::Jiggle(spjiggle) => {
@@ -86,11 +91,11 @@ pub(crate) fn board_physics(
                                 puyo.state = Default::default();
                             } else {
                                 spjiggle.life -= dt * 0.333; //TODO: Make magical numbers physics properties
-                                let offset = spjiggle.offset.max(-1.0);
+                                let offset = (-spjiggle.offset).max(-1.0);
                                 let y_scale = offset + 1.0;
                                 let xz_scale = y_scale.max(0.5).recip();
                                 puyo_transform.scale = vec3(xz_scale, y_scale, xz_scale);
-                                jiggle_offset += offset * PUYO_HEIGHT;
+                                jiggle_offset += y_scale * PUYO_HEIGHT;
                             }
                         }
                     }
@@ -99,6 +104,7 @@ pub(crate) fn board_physics(
                     return NextUp::Impossible(WhyImpossible::PuyoBanishingInPhysicsUpdate);
                 }
             }
+            // println!("JiggleOffset: {}", jiggle_offset);
             // puyo_transform.translation.y =
         }
     }
@@ -127,27 +133,55 @@ pub(crate) fn propagate_jiggle(
         return None;
     }
     use SPState::*;
-    match &mut board.get_mut_at(at)?.state {
-        state @ Still(..) => {
-            *state = Physics(SPPhysics::Jiggle(SPJiggle {
-                momentum: impulse,
-                life: 1.0,
-                offset: 0.0,
-            }));
-            Some(())
-        }
-        Physics(SPPhysics::Jiggle(SPJiggle { momentum, life, .. })) => {
-            *momentum += impulse;
-            *life = 1.0;
-            Some(())
-        }
-        _ => None,
-    }?;
+    let mut puy = board.get_mut_at(at)?;
+    let mut can_go_on = false;
+    if let Physics(SPPhysics::Jiggle(SPJiggle { momentum, .. })) = puy.state {
+        puy.state = SPState::new_jiggle(momentum + impulse);
+        can_go_on = true;
+    };
+    if matches!(puy.state, Still(..)) {
+        puy.state = SPState::new_jiggle(impulse);
+        can_go_on = true;
+    }
+    if !can_go_on {
+        return None;
+    };
     for dir in came_from.others() {
+        let Some(puy) = board.get_at(at) else {
+            continue;
+        };
         let Some(at) = dir + at else { continue };
+        let Some(other_puy) = board.get_at(at) else {
+            continue;
+        };
+        if dir == Dir::U {
+            continue;
+        };
+        if dir == Dir::L || dir == Dir::R {
+            let (pk, opk) = (puy.kind, other_puy.kind);
+            use crate::puyo_chara::PuyoType::*;
+            use Dir::*;
+            match (pk, opk, dir) {
+                (NuisanceBL, NuisanceBR, R) => (),
+                (NuisanceBR, NuisanceBL, L) => (),
+                (NuisanceBL, NuisanceTL, U) => (),
+                (NuisanceTL, NuisanceBL, D) => (),
+                (NuisanceBR, NuisanceTR, U) => (),
+                (NuisanceTR, NuisanceBR, D) => (),
+                (NuisanceTL, NuisanceTR, R) => (),
+                (NuisanceTR, NuisanceTL, L) => (),
+                (Nuisance | NuisanceBL | NuisanceBR | NuisanceTL | NuisanceTR, _, _)
+                | (_, Nuisance | NuisanceBL | NuisanceBR | NuisanceTL | NuisanceTR, _) => continue,
+                (a, b, _) => {
+                    if a != b {
+                        continue;
+                    }
+                }
+            };
+        }
         propagate_jiggle(
             JigglePropagation {
-                impulse: impulse - *impact_falloff,
+                impulse: impulse * *impact_falloff,
                 came_from: -dir,
                 at,
             },

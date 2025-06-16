@@ -1,4 +1,7 @@
-use owanimo::Board;
+use owanimo::{
+    Board,
+    standard::{ColorBoard, GroupFromColorBoard, NuisanceBoard},
+};
 
 use super::{SBoard, SPuyo};
 
@@ -52,3 +55,35 @@ impl Board for SBoard {
         arr.into_iter().flatten()
     }
 }
+
+impl NuisanceBoard for SBoard {
+    fn nuisance(&self, handle: &Self::Handle) -> bool {
+        matches!(
+            self.get_at(*handle),
+            Some(SPuyo {
+                kind: PuyoType::Nuisance
+                    | PuyoType::NuisanceBL
+                    | PuyoType::NuisanceBR
+                    | PuyoType::NuisanceTL
+                    | PuyoType::NuisanceTR,
+                ..
+            })
+        )
+    }
+}
+
+impl ColorBoard for SBoard {
+    type Color = PuyoType;
+    fn color(&self, handle: &Self::Handle) -> Option<Self::Color> {
+        self.get_at(*handle).and_then(|puy| match puy.kind {
+            PuyoType::Nuisance
+            | PuyoType::NuisanceBL
+            | PuyoType::NuisanceTL
+            | PuyoType::NuisanceBR
+            | PuyoType::NuisanceTR => None,
+            x => Some(x),
+        })
+    }
+}
+
+impl GroupFromColorBoard for SBoard {}
