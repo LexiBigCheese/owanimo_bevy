@@ -125,6 +125,16 @@ pub enum Dir {
     R,
 }
 
+impl jiggly_fever::Direction for Dir {
+    fn opposite(self) -> Self {
+        -self
+    }
+    fn other_directions(self) -> impl Iterator<Item = Self> {
+        self.others().into_iter()
+    }
+    const UP: Dir = Dir::U;
+}
+
 impl core::ops::Add<(usize, usize)> for Dir {
     type Output = Option<(usize, usize)>;
     fn add(self, rhs: (usize, usize)) -> Self::Output {
