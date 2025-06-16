@@ -195,5 +195,5 @@ pub fn screensaver_rule_plugin(app: &mut App) {
         .register_type::<SPhysProp>()
         .register_type::<EveryoneSPhysProp>()
         .init_resource::<EveryoneSPhysProp>()
-        .add_systems(Update, (main_loop::main_loop));
+        .add_systems(Update, main_loop::main_loop);
 }
