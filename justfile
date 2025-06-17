@@ -6,10 +6,10 @@ check_no_dynamic_linking:
     fi
     exit 0
 
-create_dist_folder:
+create_dist_asset_folder:
     #!/usr/bin/env bash
-    mkdir dist 2>/dev/null
-    mkdir dist/assets 2>/dev/null
+    rm -r dist_assets 2>/dev/null
+    mkdir dist_assets 2>/dev/null
     ASSET_FILES=()
     ASSET_FILES+=("bignuisancepuyo.glb")
     ASSET_FILES+=("redpuyo.glb")
@@ -19,10 +19,22 @@ create_dist_folder:
     ASSET_FILES+=("purplepuyo.glb")
     ASSET_FILES+=("nuisancepuyo.glb")
     for ass in "${ASSET_FILES[@]}"; do
-        cp "assets/$ass" "dist/assets/$ass"
+        cp "assets/$ass" "dist_assets/$ass"
     done
-    rm dist/owanimo_bevy 2>/dev/null
-    rm dist/owanimo_bevy.exe 2>/dev/null
+
+
+create_dist_folder: create_dist_asset_folder
+    #!/usr/bin/env bash
+    rm -r dist 2>/dev/null
+    mkdir dist 2>/dev/null
+    cp -r dist_assets dist/assets
+    true
+
+create_www_dist_folder: create_dist_asset_folder
+    #!/usr/bin/env bash
+    rm -r www_dist 2>/dev/null
+    cp -r www www_dist
+    cp -r dist_assets www_dist/assets
     true
 
 release_win: check_no_dynamic_linking
@@ -30,6 +42,16 @@ release_win: check_no_dynamic_linking
 
 release_linux_glibc_2_36: check_no_dynamic_linking
     cargo zigbuild --target x86_64-unknown-linux-gnu.2.36 --release
+
+release_wasm: check_no_dynamic_linking
+    cargo build --profile wasm-release --target wasm32-unknown-unknown
+
+dist_wasm: create_www_dist_folder release_wasm
+    #!/usr/bin/env bash
+    wasm-bindgen --out-dir ./www_dist/out --target web ./target/wasm32-unknown-unknown/wasm-release/owanimo_bevy.wasm
+    for file in ./www_dist/out/*.wasm; do
+        wasm-opt -Os -o wasm-opted.wasm ${file} && mv wasm-opted.wasm ${file}
+    done
 
 dist: check_no_dynamic_linking create_dist_folder release_win release_linux_glibc_2_36
     #!/usr/bin/env bash

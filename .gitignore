@@ -1,5 +1,7 @@
 /target
 /dist
+/dist_assets
+/www_dist
 owanimo_bevy.7z
 owanimo_bevy_linux_glibc_2_36.tar.xz
 owanimo_bevy_windows.tar.xz
