@@ -59,18 +59,16 @@ publish_wasm: dist_wasm
     #!/usr/bin/env bash
     rm -rf /tmp/owanimo_bevy_web_dist 2>/dev/null
     ORIGINAL_ORIGIN=`git remote get-url origin`
-    git clone . /tmp/owanimo_bevy_web_dist
+    git clone $ORIGINAL_ORIGIN /tmp/owanimo_bevy_web_dist
     WWW_DIST_DIR=`pwd`/www_dist
     cd /tmp/owanimo_bevy_web_dist
     git checkout -b gh-pages
-    git remote add origin_gh $ORIGINAL_ORIGIN
-    git pull --set-upstream origin_gh gh-pages
+    git pull
     rm -rf *
-    rm -rf .cargo
     cp -r $WWW_DIST_DIR/* .
     git add -A
     git commit -m "web publish"
-    git push -u origin_gh gh-pages
+    git push -f --set-upstream origin gh-pages
 
 
 dist: check_no_dynamic_linking create_dist_folder release_win release_linux_glibc_2_36
