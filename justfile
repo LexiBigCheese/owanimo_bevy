@@ -52,11 +52,33 @@ dist_wasm: create_www_dist_folder release_wasm
     for file in ./www_dist/out/*.wasm; do
         wasm-opt -Os -o wasm-opted.wasm ${file} && mv wasm-opted.wasm ${file}
     done
+    rm owanimo_bevy_web.tar.xz 2>/dev/null
+    tar -cJf owanimo_bevy_web.tar.xz www_dist/
+
+publish_wasm: dist_wasm
+    #!/usr/bin/env bash
+    rm -rf /tmp/owanimo_bevy_web_dist 2>/dev/null
+    ORIGINAL_ORIGIN=`git remote get-url origin`
+    git clone . /tmp/owanimo_bevy_web_dist
+    WWW_DIST_DIR=`pwd`/www_dist
+    cd /tmp/owanimo_bevy_web_dist
+    git checkout -b gh-pages
+    git remote add origin_gh $ORIGINAL_ORIGIN
+    git pull --set-upstream origin_gh gh-pages
+    rm -rf *
+    rm -rf .cargo
+    cp -r $WWW_DIST_DIR/* .
+    git add -A
+    git commit -m "web publish"
+    git push -u origin_gh gh-pages
+
 
 dist: check_no_dynamic_linking create_dist_folder release_win release_linux_glibc_2_36
     #!/usr/bin/env bash
     cp target/x86_64-unknown-linux-gnu/release/owanimo_bevy dist/owanimo_bevy
+    rm owanimo_bevy_linux_glibc_2_36.tar.xz 2>/dev/null
     tar -cJf owanimo_bevy_linux_glibc_2_36.tar.xz dist/
     rm dist/owanimo_bevy
     cp target/x86_64-pc-windows-msvc/release/owanimo_bevy.exe dist/owanimo_bevy.exe
+    rm owanimo_bevy_windows.tar.xz 2>/dev/null
     tar -cJf owanimo_bevy_windows.tar.xz dist/
